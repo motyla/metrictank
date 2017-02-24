@@ -45,7 +45,7 @@ func (s *Server) appStatus(ctx *middleware.Context) {
 func (s *Server) getClusterStatus(ctx *middleware.Context) {
 	status := models.ClusterStatus{
 		ClusterName: cluster.ClusterName,
-		NodeName:    cluster.Manager.ThisNode().Name,
+		NodeName:    cluster.Manager.ThisNode().GetName(),
 		Members:     cluster.Manager.MemberList(),
 	}
 	response.Write(ctx, response.NewJson(200, status, ""))
@@ -56,7 +56,7 @@ func (s *Server) postClusterMembers(ctx *middleware.Context, req models.ClusterM
 	var toJoin []string
 
 	for _, memberNode := range cluster.Manager.MemberList() {
-		memberNames[memberNode.Name] = struct{}{}
+		memberNames[memberNode.GetName()] = struct{}{}
 	}
 
 	for _, peerName := range req.Members {

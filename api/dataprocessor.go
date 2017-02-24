@@ -120,7 +120,7 @@ func (s *Server) getTargets(ctx context.Context, reqs []models.Req) ([]models.Se
 		if req.Node.IsLocal() {
 			localReqs = append(localReqs, req)
 		} else {
-			remoteReqs[req.Node.Name] = append(remoteReqs[req.Node.Name], req)
+			remoteReqs[req.Node.GetName()] = append(remoteReqs[req.Node.GetName()], req)
 		}
 	}
 
@@ -178,7 +178,7 @@ func (s *Server) getTargetsRemote(ctx context.Context, remoteReqs map[string][]m
 	wg := sync.WaitGroup{}
 	wg.Add(len(remoteReqs))
 	for _, nodeReqs := range remoteReqs {
-		log.Debug("DP getTargetsRemote: handling %d reqs from %s", len(nodeReqs), nodeReqs[0].Node.Name)
+		log.Debug("DP getTargetsRemote: handling %d reqs from %s", len(nodeReqs), nodeReqs[0].Node.GetName())
 		go func(ctx context.Context, reqs []models.Req) {
 			defer wg.Done()
 			node := reqs[0].Node
@@ -190,11 +190,11 @@ func (s *Server) getTargetsRemote(ctx context.Context, remoteReqs map[string][]m
 			var resp models.GetDataResp
 			_, err = resp.UnmarshalMsg(buf)
 			if err != nil {
-				log.Error(3, "DP getTargetsRemote: error unmarshaling body from %s/getdata: %q", node.Name, err)
+				log.Error(3, "DP getTargetsRemote: error unmarshaling body from %s/getdata: %q", node.GetName(), err)
 				errorsChan <- err
 				return
 			}
-			log.Debug("DP getTargetsRemote: %s returned %d series", node.Name, len(resp.Series))
+			log.Debug("DP getTargetsRemote: %s returned %d series", node.GetName(), len(resp.Series))
 			seriesChan <- resp.Series
 		}(ctx, nodeReqs)
 	}
@@ -446,7 +446,7 @@ func (s *Server) getSeriesCachedStore(ctx *requestContext, until uint32) []chunk
 				}
 				// it's important that the itgens get added in chronological order,
 				// currently we rely on cassandra returning results in order
-				go s.Cache.Add(key, prevts, itgen)
+				go s.Cache.Add(key, ctx.Key, ctx.Cons, prevts, itgen)
 				prevts = itgen.Ts
 				iters = append(iters, *it)
 			}

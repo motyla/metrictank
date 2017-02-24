@@ -38,6 +38,8 @@ func (s *Server) RegisterRoutes() {
 	r.Combo("/index/delete", ready, bind(models.IndexDelete{})).Get(s.indexDelete).Post(s.indexDelete)
 	r.Combo("/index/get", ready, bind(models.IndexGet{})).Get(s.indexGet).Post(s.indexGet)
 
+	r.Combo("/ccache/delete", bind(models.CCacheDelete{})).Post(s.ccacheDelete).Get(s.ccacheDelete)
+
 	r.Options("/*", func(ctx *macaron.Context) {
 		ctx.Write(nil)
 	})

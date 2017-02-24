@@ -55,8 +55,8 @@ type ClusterManager interface {
 	IsReady() bool
 	SetReady()
 	SetState(NodeState)
-	ThisNode() Node
-	MemberList() []Node
+	ThisNode() NodeIf
+	MemberList() []NodeIf
 	Join([]string) (int, error)
 	GetPartitions() []int32
 	SetPartitions([]int32)
@@ -117,13 +117,21 @@ func (c *MemberlistManager) setList(list *memberlist.Memberlist) {
 	c.Unlock()
 }
 
-func (c *MemberlistManager) ThisNode() Node {
+func (c *MemberlistManager) ThisNode() NodeIf {
+	return c.thisNode()
+}
+
+func (c *MemberlistManager) thisNode() Node {
 	c.RLock()
 	defer c.RUnlock()
 	return c.members[c.nodeName]
 }
 
-func (c *MemberlistManager) MemberList() []Node {
+func (c *MemberlistManager) MemberList() []NodeIf {
+	return toIf(c.memberList())
+}
+
+func (c *MemberlistManager) memberList() []Node {
 	c.RLock()
 	list := make([]Node, len(c.members), len(c.members))
 	i := 0
@@ -439,13 +447,21 @@ func (m *SingleNodeManager) SetState(state NodeState) {
 	nodeReady.Set(state == NodeReady)
 }
 
-func (m *SingleNodeManager) ThisNode() Node {
+func (m *SingleNodeManager) ThisNode() NodeIf {
+	return m.thisNode()
+}
+
+func (m *SingleNodeManager) thisNode() Node {
 	m.RLock()
 	defer m.RUnlock()
 	return m.node
 }
 
-func (m *SingleNodeManager) MemberList() []Node {
+func (m *SingleNodeManager) MemberList() []NodeIf {
+	return toIf(m.memberList())
+}
+
+func (m *SingleNodeManager) memberList() []Node {
 	m.RLock()
 	defer m.RUnlock()
 	return []Node{m.node}
@@ -487,4 +503,12 @@ func (m *SingleNodeManager) SetPriority(prio int) {
 
 func (m *SingleNodeManager) Stop() {
 	return
+}
+
+func toIf(in []Node) []NodeIf {
+	out := make([]NodeIf, len(in))
+	for i, m := range in {
+		out[i] = m
+	}
+	return out
 }

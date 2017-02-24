@@ -304,7 +304,7 @@ func main() {
 	/***********************************
 	    Start the ClusterManager
 	***********************************/
-	cluster.Start()
+	cluster.Manager.Start()
 
 	/***********************************
 		Initialize our MetricIdx
@@ -404,7 +404,7 @@ func main() {
 
 	// Leave the cluster. All other nodes will be notified we have left
 	// and so will stop sending us requests.
-	cluster.Stop()
+	cluster.Manager.Stop()
 
 	// stop API
 	apiServer.Stop()

@@ -3,18 +3,25 @@ package cache
 import (
 	"context"
 
+	"github.com/raintank/metrictank/consolidation"
 	"github.com/raintank/metrictank/mdata/chunk"
 )
 
 type Cache interface {
-	Add(string, uint32, chunk.IterGen)
+	Add(string, string, consolidation.Consolidator, uint32, chunk.IterGen)
 	CacheIfHot(string, uint32, chunk.IterGen)
 	Stop()
 	Search(context.Context, string, uint32, uint32) *CCSearchResult
+	DelMetric(string) *CCDelMetricResult
 }
 
 type CachePusher interface {
 	CacheIfHot(string, uint32, chunk.IterGen)
+}
+
+type CCDelMetricResult struct {
+	Series   int
+	Archives int
 }
 
 type CCSearchResult struct {

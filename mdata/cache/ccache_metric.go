@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/raintank/metrictank/consolidation"
 	"github.com/raintank/metrictank/mdata/cache/accnt"
 	"github.com/raintank/metrictank/mdata/chunk"
 	"github.com/raintank/worldping-api/pkg/log"
@@ -19,6 +20,9 @@ type CCacheMetric struct {
 
 	// the list of chunk time stamps in ascending order
 	keys []uint32
+
+	RawMetric string
+	Cons      consolidation.Consolidator
 }
 
 func NewCCacheMetric() *CCacheMetric {
@@ -27,7 +31,9 @@ func NewCCacheMetric() *CCacheMetric {
 	}
 }
 
-func (mc *CCacheMetric) Init(prev uint32, itergen chunk.IterGen) {
+func (mc *CCacheMetric) Init(rawMetric string, cons consolidation.Consolidator, prev uint32, itergen chunk.IterGen) {
+	mc.RawMetric = rawMetric
+	mc.Cons = cons
 	mc.Add(prev, itergen)
 }
 
@@ -42,11 +48,16 @@ func (mc *CCacheMetric) Del(ts uint32) int {
 	prev := mc.chunks[ts].Prev
 	next := mc.chunks[ts].Next
 
-	if _, ok := mc.chunks[prev]; prev != 0 && ok {
-		mc.chunks[prev].Next = 0
+	if prev != 0 {
+		if _, ok := mc.chunks[prev]; ok {
+			mc.chunks[prev].Next = 0
+		}
 	}
-	if _, ok := mc.chunks[next]; next != 0 && ok {
-		mc.chunks[next].Prev = 0
+
+	if next != 0 {
+		if _, ok := mc.chunks[next]; ok {
+			mc.chunks[next].Prev = 0
+		}
 	}
 
 	delete(mc.chunks, ts)

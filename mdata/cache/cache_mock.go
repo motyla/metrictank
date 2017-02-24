@@ -1,8 +1,11 @@
 package cache
 
 import (
-	"github.com/raintank/metrictank/mdata/chunk"
+	"context"
 	"sync"
+
+	"github.com/raintank/metrictank/consolidation"
+	"github.com/raintank/metrictank/mdata/chunk"
 )
 
 type MockCache struct {
@@ -12,9 +15,17 @@ type MockCache struct {
 	CacheIfHotCb    func()
 	StopCount       int
 	SearchCount     int
+	DelMetricRes    CCDelMetricResult
+	DelMetricKeys   []string
 }
 
-func (mc *MockCache) Add(m string, t uint32, i chunk.IterGen) {
+func NewMockCache() *MockCache {
+	return &MockCache{
+		DelMetricKeys: make([]string, 0),
+	}
+}
+
+func (mc *MockCache) Add(m, n string, cons consolidation.Consolidator, t uint32, i chunk.IterGen) {
 	mc.Lock()
 	defer mc.Unlock()
 	mc.AddCount++
@@ -35,9 +46,14 @@ func (mc *MockCache) Stop() {
 	mc.StopCount++
 }
 
-func (mc *MockCache) Search(m string, f uint32, u uint32) *CCSearchResult {
+func (mc *MockCache) Search(ctx context.Context, m string, f uint32, u uint32) *CCSearchResult {
 	mc.Lock()
 	defer mc.Unlock()
 	mc.SearchCount++
 	return nil
+}
+
+func (mc *MockCache) DelMetric(key string) *CCDelMetricResult {
+	mc.DelMetricKeys = append(mc.DelMetricKeys, key)
+	return &mc.DelMetricRes
 }

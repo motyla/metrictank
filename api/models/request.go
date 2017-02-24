@@ -24,7 +24,7 @@ type Req struct {
 	// we need to make this differentiation to tie back to the original request (and we can't just fill in the concrete consolidation in the request,
 	// because one request may result in multiple series with different consolidators)
 	ConsReq  consolidation.Consolidator `json:"consolidator_req"`
-	Node     cluster.Node               `json:"-"`
+	Node     cluster.NodeIf             `json:"-"`
 	SchemaId uint16                     `json:"schemaId"`
 	AggId    uint16                     `json:"aggId"`
 
@@ -36,7 +36,7 @@ type Req struct {
 	AggNum       uint32 `json:"aggNum"`       // how many points to consolidate together at runtime, after fetching from the archive
 }
 
-func NewReq(key, target, patt string, from, to, maxPoints, rawInterval uint32, cons, consReq consolidation.Consolidator, node cluster.Node, schemaId, aggId uint16) Req {
+func NewReq(key, target, patt string, from, to, maxPoints, rawInterval uint32, cons, consReq consolidation.Consolidator, node cluster.NodeIf, schemaId, aggId uint16) Req {
 	return Req{
 		key,
 		target,
