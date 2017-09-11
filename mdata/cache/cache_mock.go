@@ -57,3 +57,5 @@ func (mc *MockCache) DelMetric(key string) *CCDelMetricResult {
 	mc.DelMetricKeys = append(mc.DelMetricKeys, key)
 	return &mc.DelMetricRes
 }
+
+func (mc *MockCache) Reset() {}

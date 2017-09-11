@@ -13,6 +13,7 @@ type Cache interface {
 	Stop()
 	Search(context.Context, string, uint32, uint32) *CCSearchResult
 	DelMetric(string) *CCDelMetricResult
+	Reset()
 }
 
 type CachePusher interface {

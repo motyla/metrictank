@@ -173,6 +173,7 @@ func (a *FlatAccnt) eventLoop() {
 				a.metrics = make(map[string]*FlatAccntMet)
 				a.total = 0
 				a.lru.reset()
+				cacheSizeUsed.SetUint64(a.total)
 			}
 
 			// evict until we're below the max

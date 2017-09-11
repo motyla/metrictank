@@ -25,17 +25,28 @@ func (s *Server) ccacheDelete(ctx *middleware.Context, req models.CCacheDelete) 
 		}
 	}
 
+	fullFlush := false
 	for _, pattern := range req.Patterns {
-		nodes, err := s.MetricIndex.Find(req.OrgId, pattern, 0)
-		if err != nil {
-			res.Errors += 1
-			code = 500
-		} else {
-			for _, node := range nodes {
-				for _, def := range node.Defs {
-					delResult := s.Cache.DelMetric(def.Id)
-					res.DeletedSeries += delResult.Series
-					res.DeletedArchives += delResult.Archives
+		if pattern == "**" {
+			fullFlush = true
+		}
+	}
+
+	if fullFlush {
+		s.Cache.Reset()
+	} else {
+		for _, pattern := range req.Patterns {
+			nodes, err := s.MetricIndex.Find(req.OrgId, pattern, 0)
+			if err != nil {
+				res.Errors += 1
+				code = 500
+			} else {
+				for _, node := range nodes {
+					for _, def := range node.Defs {
+						delResult := s.Cache.DelMetric(def.Id)
+						res.DeletedSeries += delResult.Series
+						res.DeletedArchives += delResult.Archives
+					}
 				}
 			}
 		}

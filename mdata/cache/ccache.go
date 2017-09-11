@@ -153,8 +153,8 @@ func (c *CCache) Add(metric, rawMetric string, cons consolidation.Consolidator, 
 }
 
 func (cc *CCache) Reset() {
-	cc.accnt.Reset()
 	cc.Lock()
+	cc.accnt.Reset()
 	cc.metricCache = make(map[string]*CCacheMetric)
 	cc.metricRawKeys = make(map[string]map[consolidation.Consolidator]string)
 	cc.Unlock()
