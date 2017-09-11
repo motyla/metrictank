@@ -86,6 +86,57 @@ func TestMetricDelete(t *testing.T) {
 	}
 }
 
+func TestMetricDeleteWithErrorInPropagation(t *testing.T) {
+	manager := cluster.InitMock()
+
+	expectedDeletedSeries, expectedDeletedArchives := 0, 0
+
+	// define how many series/archives are getting deleted by peer 0
+	resp := models.CCacheDeleteResp{
+		Peers:           map[string]models.CCacheDeleteResp{"2": {Errors: 1}},
+		DeletedSeries:   1,
+		DeletedArchives: 1,
+		Errors:          1,
+	}
+
+	respEncoded := response.NewJson(500, resp, "")
+	buf, _ := respEncoded.Body()
+	manager.Peers = append(manager.Peers, cluster.NewMockNode(false, "0", buf))
+
+	// define how many series/archives are going to get deleted by this server
+	delSeries := 3
+	delArchives := 10
+	testKey := "12345"
+
+	// add up how many series/archives are expected to be deleted
+	expectedDeletedSeries += delSeries
+	expectedDeletedArchives += delArchives
+
+	srv, _ := newSrv(delSeries, delArchives, testKey)
+	req, err := json.Marshal(models.CCacheDelete{
+		Patterns:  []string{"test.*"},
+		OrgId:     1,
+		Propagate: true,
+	})
+
+	ts := httptest.NewServer(srv.Macaron)
+	defer ts.Close()
+
+	res, err := http.Post(ts.URL+"/ccache/delete", "application/json", bytes.NewReader(req))
+	if err != nil {
+		t.Fatalf("There was an error in the request: %s", err)
+	}
+
+	expectedCode := 500
+	if res.StatusCode != expectedCode {
+		buf2 := new(bytes.Buffer)
+		buf2.ReadFrom(res.Body)
+		respParsed := models.CCacheDeleteResp{}
+		json.Unmarshal(buf2.Bytes(), &respParsed)
+		t.Fatalf("Expected status code %d, but got %d:\n%+v", expectedCode, res.StatusCode, respParsed)
+	}
+}
+
 func TestMetricDeletePropagation(t *testing.T) {
 	manager := cluster.InitMock()
 

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"sync"
 
 	"github.com/raintank/metrictank/api/middleware"
@@ -15,26 +14,33 @@ import (
 
 func (s *Server) ccacheDelete(ctx *middleware.Context, req models.CCacheDelete) {
 	res := models.CCacheDeleteResp{}
+	code := 200
 
 	if req.Propagate {
 		res.Peers = s.ccacheDeletePropagate(ctx.Req.Context(), &req)
+		for _, peer := range res.Peers {
+			if peer.Errors > 0 {
+				code = 500
+			}
+		}
 	}
 
 	for _, pattern := range req.Patterns {
 		nodes, err := s.MetricIndex.Find(req.OrgId, pattern, 0)
 		if err != nil {
-			response.Write(ctx, response.NewError(http.StatusBadRequest, err.Error()))
-			return
-		}
-		for _, node := range nodes {
-			for _, def := range node.Defs {
-				delResult := s.Cache.DelMetric(def.Id)
-				res.DeletedSeries += delResult.Series
-				res.DeletedArchives += delResult.Archives
+			res.Errors += 1
+			code = 500
+		} else {
+			for _, node := range nodes {
+				for _, def := range node.Defs {
+					delResult := s.Cache.DelMetric(def.Id)
+					res.DeletedSeries += delResult.Series
+					res.DeletedArchives += delResult.Archives
+				}
 			}
 		}
 	}
-	response.Write(ctx, response.NewJson(200, res, ""))
+	response.Write(ctx, response.NewJson(code, res, ""))
 }
 
 func (s *Server) ccacheDeletePropagate(ctx context.Context, req *models.CCacheDelete) map[string]models.CCacheDeleteResp {
