@@ -450,6 +450,87 @@ func TestTagSorting(t *testing.T) {
 	}
 }
 
+func autoCompleteTagsAndCompare(t testing.TB, tagPrefix string, expr []string, from int64, expRes []string, expErr bool) {
+	t.Helper()
+	res, err := ix.AutoCompleteTags(1, tagPrefix, expr, from)
+
+	if (err != nil) != expErr {
+		if expErr {
+			t.Fatalf("Expected an error, but did not get one")
+		} else {
+			t.Fatalf("Expected no error, but got %s", err)
+		}
+	}
+
+	if len(res) != len(expRes) {
+		t.Fatalf("Wrong result, Expected:\n%s\nGot:\n%s\n", expRes, res)
+	}
+
+	sort.Strings(expRes)
+	sort.Strings(res)
+	for i := range res {
+		if expRes[i] != res[i] {
+			t.Fatalf("Wrong result, Expected:\n%s\nGot:\n%s\n", expRes, res)
+		}
+	}
+}
+
+func TestAutoCompleteTag(t *testing.T) {
+	InitSmallIndex()
+
+	type testCase struct {
+		tagPrefix string
+		expr      []string
+		from      int64
+		expRes    []string
+		expErr    bool
+	}
+
+	testCases := []testCase{
+		{
+			tagPrefix: "di",
+			expr:      []string{"direction=write", "host=host90"},
+			from:      100,
+			expRes:    []string{"disk", "direction"},
+			expErr:    false,
+		}, {
+			tagPrefix: "di",
+			expr:      []string{"direction=write", "host=host90", "device=cpu"},
+			from:      100,
+			expRes:    []string{},
+			expErr:    false,
+		}, {
+			tagPrefix: "",
+			expr:      []string{"direction=write", "host=host90"},
+			from:      100,
+			expRes:    []string{"dc", "host", "device", "disk", "metric", "direction"},
+			expErr:    false,
+		}, {
+			tagPrefix: "ho",
+			expr:      []string{},
+			from:      100,
+			expRes:    []string{"host"},
+			expErr:    false,
+		}, {
+			tagPrefix: "host",
+			expr:      []string{},
+			from:      100,
+			expRes:    []string{"host"},
+			expErr:    false,
+		}, {
+			tagPrefix: "",
+			expr:      []string{},
+			from:      100,
+			expRes:    []string{"dc", "host", "device", "disk", "metric", "direction", "cpu"},
+			expErr:    false,
+		},
+	}
+
+	for _, tc := range testCases {
+		autoCompleteTagsAndCompare(t, tc.tagPrefix, tc.expr, tc.from, tc.expRes, tc.expErr)
+	}
+}
+
 func BenchmarkTagDetailsWithoutFromNorFilter(b *testing.B) {
 	InitLargeIndex()
 
