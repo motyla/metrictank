@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"regexp"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/metrictank/idx"
 	"github.com/grafana/metrictank/mdata"
 	"github.com/grafana/metrictank/stats"
+	"github.com/grafana/metrictank/tracing"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/raintank/worldping-api/pkg/log"
 	"github.com/rakyll/globalconf"
 	"gopkg.in/raintank/schema.v1"
@@ -584,7 +587,11 @@ func (m *MemoryIdx) idsByTagQuery(orgId int, query TagQuery) []string {
 	return m.resolveIDs(query.Run(tags, m.DefById))
 }
 
-func (m *MemoryIdx) Find(orgId int, pattern string, from int64) ([]idx.Node, error) {
+func (m *MemoryIdx) Find(ctx context.Context, orgId int, pattern string, from int64) ([]idx.Node, error) {
+	tracer := opentracing.GlobalTracer()
+	_, span := tracing.NewSpan(ctx, tracer, "idx.Find")
+	defer span.Finish()
+
 	pre := time.Now()
 	m.RLock()
 	defer m.RUnlock()
@@ -632,6 +639,7 @@ func (m *MemoryIdx) Find(orgId int, pattern string, from int64) ([]idx.Node, err
 		}
 	}
 	log.Debug("memory-idx: %d nodes has %d unique paths.", len(matchedNodes), len(results))
+	span.SetTag("results", results)
 	statFindDuration.Value(time.Since(pre))
 	return results, nil
 }

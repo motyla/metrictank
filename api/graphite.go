@@ -106,7 +106,7 @@ func (s *Server) findSeriesLocal(ctx context.Context, orgId int, patterns []stri
 		span.SetTag("org", orgId)
 		span.SetTag("pattern", pattern)
 		defer span.Finish()
-		nodes, err := s.MetricIndex.Find(orgId, pattern, seenAfter)
+		nodes, err := s.MetricIndex.Find(ctx, orgId, pattern, seenAfter)
 		if err != nil {
 			tags.Error.Set(span, true)
 			return nil, response.NewError(http.StatusBadRequest, err.Error())

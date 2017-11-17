@@ -3,6 +3,7 @@
 package idx
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -120,7 +121,7 @@ type MetricIndex interface {
 	// Graphite would. see https://graphite.readthedocs.io/en/latest/render_api.html#paths-and-wildcards
 	// And the unix stimestamp is used to ignore series that have been stale since
 	// the timestamp.
-	Find(int, string, int64) ([]Node, error)
+	Find(context.Context, int, string, int64) ([]Node, error)
 
 	// List returns all Archives for the passed OrgId, or for all organisations if -1 is provided.
 	List(int) []Archive

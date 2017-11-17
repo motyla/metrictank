@@ -93,7 +93,7 @@ func (s *Server) indexFind(ctx *middleware.Context, req models.IndexFind) {
 	resp := models.NewIndexFindResp()
 
 	for _, pattern := range req.Patterns {
-		nodes, err := s.MetricIndex.Find(req.OrgId, pattern, req.From)
+		nodes, err := s.MetricIndex.Find(ctx.Req.Context(), req.OrgId, pattern, req.From)
 		if err != nil {
 			response.Write(ctx, response.NewError(http.StatusBadRequest, err.Error()))
 			return
