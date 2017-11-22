@@ -431,7 +431,25 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "lag-max",
+              "color": "#bf1b00",
+              "lines": false,
+              "pointradius": 1,
+              "points": true,
+              "yaxis": 2
+            },
+            {
+              "alias": "lag-min",
+              "color": "#508642",
+              "lines": false,
+              "pointradius": 1,
+              "points": true,
+              "yaxis": 2
+            }
+          ],
+          "spaceLength": 10,
           "span": 3,
           "stack": false,
           "steppedLine": false,
@@ -439,12 +457,24 @@
             {
               "refId": "A",
               "target": "aliasByNode(metrictank.stats.$environment.$instance.*.metrics_active.gauge32, 3,4)"
+            },
+            {
+              "hide": false,
+              "refId": "B",
+              "target": "alias(consolidateBy(maxSeries(metrictank.stats.$environment.$instance.input.*.lag.max.gauge32), 'max'), 'lag-max')",
+              "textEditor": false
+            },
+            {
+              "hide": false,
+              "refId": "C",
+              "target": "alias(minSeries(consolidateBy(metrictank.stats.$environment.$instance.input.*.lag.max.gauge32, 'min')), 'lag-min')",
+              "textEditor": false
             }
           ],
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "metrics active",
+          "title": "metrics active & lag",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -467,7 +497,7 @@
               "show": true
             },
             {
-              "format": "short",
+              "format": "ns",
               "label": null,
               "logBase": 1,
               "max": null,

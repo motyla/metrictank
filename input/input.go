@@ -26,6 +26,7 @@ type DefaultHandler struct {
 	MsgsAge         *stats.Meter32   // in ms
 	pressureIdx     *stats.Counter32
 	pressureTank    *stats.Counter32
+	lag             *stats.Range32
 
 	metrics     mdata.Metrics
 	metricIndex idx.MetricIndex
@@ -38,6 +39,7 @@ func NewDefaultHandler(metrics mdata.Metrics, metricIndex idx.MetricIndex, input
 		MsgsAge:         stats.NewMeter32(fmt.Sprintf("input.%s.message_age", input), false),
 		pressureIdx:     stats.NewCounter32(fmt.Sprintf("input.%s.pressure.idx", input)),
 		pressureTank:    stats.NewCounter32(fmt.Sprintf("input.%s.pressure.tank", input)),
+		lag:             stats.NewRange32(fmt.Sprintf("input.%s.lag", input)),
 
 		metrics:     metrics,
 		metricIndex: metricIndex,
@@ -70,5 +72,6 @@ func (in DefaultHandler) Process(metric *schema.MetricData, partition int32) {
 	pre = time.Now()
 	m := in.metrics.GetOrCreate(metric.Id, metric.Name, archive.SchemaId, archive.AggId)
 	m.Add(uint32(metric.Time), metric.Value)
+	in.lag.Value(int(time.Now().UnixNano() - metric.Time*1000000000)) // sub-second measurements only reliable if metric was sent at beginning of a second
 	in.pressureTank.Add(int(time.Since(pre).Nanoseconds()))
 }
